@@ -1,0 +1,10 @@
+[
+    {
+        "username": "admin",
+        "email": "admin@example.com",
+        "password": "password",
+        "role": "admin",
+        "avatar": "https://example.com/avatar.png",
+        "status": "active"
+    }
+]

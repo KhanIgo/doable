@@ -1,0 +1,10 @@
+{
+    "id": "primary key autoincrement",
+    "name": "text not null",
+    "description": "text",
+    "status": "integer not null default 0",
+    "user_id": "integer not null",
+    "data": "JSON not null default '{}'",
+    "created_at": "timestamp not null default current_timestamp",
+    "updated_at": "timestamp not null default current_timestamp"
+}

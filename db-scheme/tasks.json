@@ -1,0 +1,20 @@
+{
+    "id": "primary key autoincrement",
+    "title": "text not null",
+    "description": "text",
+    "status": "integer not null default 0",
+    "project_id": "integer not null",
+    "user_id": "integer not null",
+    "data": "JSON not null default '{}'",
+    "attachments": "JSON not null default '{}'",
+    "comments": "JSON not null default '{}'",
+    "tags": "JSON not null default '{}'",
+    "labels": "JSON not null default '{}'",
+    "assignees": "JSON not null default '{}'",
+    "priority": "integer not null default 0",
+    "type": "text not null default 'task'",
+    "subtasks": "JSON not null default '{}'",
+    "due_date": "timestamp",
+    "created_at": "timestamp not null default current_timestamp",
+    "updated_at": "timestamp not null default current_timestamp"
+}

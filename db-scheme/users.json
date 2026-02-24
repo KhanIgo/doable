@@ -1,0 +1,12 @@
+{
+    "id": "primary key autoincrement",
+    "username": "text",
+    "email": "text not null",
+    "role": "text not null default 'user'",
+    "password": "text not null",
+    "avatar": "text",
+    "status": "text not null default 'active'",
+    "data": "JSON not null default '{}'",
+    "created_at": "timestamp not null default current_timestamp",
+    "updated_at": "timestamp not null default current_timestamp"
+}
