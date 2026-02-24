@@ -1,20 +1,18 @@
 <template>
-  <div class="container">
-    <h1>Doable - Task Manager</h1>
-    
+  <div class="page">
+    <h2>Task Manager</h2>
+
     <form @submit.prevent="addTask" class="task-form">
-      <input 
-        v-model="newTask.title" 
-        type="text" 
-        placeholder="What needs to be done?" 
+      <input
+        v-model="newTask.title"
+        type="text"
+        placeholder="What needs to be done?"
         required
         class="task-input"
       />
-      <input 
-        v-model="newTask.description" 
-        type="text" 
-        placeholder="Description (optional)" 
-        class="task-input"
+      <MarkdownEditor
+        v-model="newTask.description"
+        placeholder="Add a detailed description (markdown supported)..."
       />
       <button type="submit" class="add-btn" :disabled="!newTask.title.trim()">
         Add Task
@@ -22,24 +20,24 @@
     </form>
 
     <div v-if="loading" class="loading">Loading tasks...</div>
-    
+
     <ul v-else-if="tasks.length > 0" class="task-list">
-      <li 
-        v-for="task in tasks" 
-        :key="task.id" 
+      <li
+        v-for="task in tasks"
+        :key="task.id"
         class="task-item"
         :class="{ completed: task.completed }"
       >
         <div class="task-content">
-          <input 
-            type="checkbox" 
-            :checked="task.completed" 
+          <input
+            type="checkbox"
+            :checked="task.completed"
             @change="toggleTask(task)"
             class="task-checkbox"
           />
           <div class="task-details">
             <h3>{{ task.title }}</h3>
-            <p v-if="task.description">{{ task.description }}</p>
+            <div v-if="task.description" class="task-description" v-html="renderMarkdown(task.description)"></div>
           </div>
         </div>
         <button @click="deleteTask(task)" class="delete-btn">
@@ -55,9 +53,17 @@
 </template>
 
 <script setup>
+import markdownit from 'markdown-it'
+
+const md = markdownit({ html: true, linkify: true })
+
 const tasks = ref([])
 const loading = ref(true)
 const newTask = ref({ title: '', description: '' })
+
+function renderMarkdown(text) {
+  return md.render(text)
+}
 
 async function fetchTasks() {
   try {
@@ -72,11 +78,17 @@ async function fetchTasks() {
 
 async function addTask() {
   if (!newTask.value.title.trim()) return
-  
+
   try {
     const task = await $fetch('/api/tasks', {
       method: 'POST',
-      body: newTask.value
+      body: {
+        ...newTask.value,
+        project_id: 1,
+        user_id: 1,
+        priority: 0,
+        type: 'task'
+      }
     })
     tasks.value.unshift(task)
     newTask.value = { title: '', description: '' }
@@ -89,7 +101,7 @@ async function toggleTask(task) {
   try {
     const updated = await $fetch(`/api/tasks/${task.id}`, {
       method: 'PATCH',
-      body: { completed: !task.completed }
+      body: { status: task.status === 1 ? 0 : 1 }
     })
     const index = tasks.value.findIndex(t => t.id === task.id)
     if (index !== -1) {
@@ -116,34 +128,16 @@ onMounted(() => {
 })
 </script>
 
-<style>
-* {
-  box-sizing: border-box;
-  margin: 0;
-  padding: 0;
-}
-
-body {
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, sans-serif;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-  min-height: 100vh;
-  padding: 2rem;
-}
-
-.container {
-  max-width: 600px;
+<style scoped>
+.page {
+  max-width: 800px;
   margin: 0 auto;
-  background: white;
-  border-radius: 12px;
-  padding: 2rem;
-  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
 }
 
-h1 {
-  text-align: center;
+h2 {
   color: #333;
-  margin-bottom: 2rem;
-  font-size: 2rem;
+  margin-bottom: 1.5rem;
+  font-size: 1.5rem;
 }
 
 .task-form {
@@ -235,9 +229,61 @@ h1 {
   margin-bottom: 0.25rem;
 }
 
-.task-details p {
+.task-description {
   font-size: 0.875rem;
   color: #666;
+  line-height: 1.5;
+}
+
+.task-description :deep(h1),
+.task-description :deep(h2),
+.task-description :deep(h3),
+.task-description :deep(h4),
+.task-description :deep(h5),
+.task-description :deep(h6) {
+  font-size: 0.9rem;
+  margin-top: 0.5rem;
+  margin-bottom: 0.25rem;
+}
+
+.task-description :deep(p) {
+  margin-bottom: 0.5rem;
+}
+
+.task-description :deep(ul),
+.task-description :deep(ol) {
+  padding-left: 1.25rem;
+  margin-bottom: 0.5rem;
+}
+
+.task-description :deep(code) {
+  background: #f0f0f0;
+  padding: 0.125rem 0.375rem;
+  border-radius: 3px;
+  font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
+  font-size: 0.85em;
+}
+
+.task-description :deep(pre) {
+  background: #f6f8fa;
+  padding: 0.75rem;
+  border-radius: 4px;
+  overflow-x: auto;
+  margin-bottom: 0.5rem;
+}
+
+.task-description :deep(pre code) {
+  background: transparent;
+  padding: 0;
+}
+
+.task-description :deep(a) {
+  color: #667eea;
+  text-decoration: none;
+}
+
+.task-description :deep(a:hover) {
+  text-decoration: underline;
 }
 
 .delete-btn {
