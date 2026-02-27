@@ -1,48 +1,104 @@
 <template>
-  <div class="markdown-editor">
-    <div class="toolbar">
-      <button type="button" @click="insertMarkdown('**', '**')" title="Bold" class="toolbar-btn">
-        <strong>B</strong>
-      </button>
-      <button type="button" @click="insertMarkdown('*', '*')" title="Italic" class="toolbar-btn">
+  <div class="rounded-lg border border-gray-200 dark:border-gray-800 overflow-hidden focus-within:ring-2 focus-within:ring-primary/50 ring-offset-2 dark:ring-offset-gray-900 transition-shadow">
+    <div class="flex flex-wrap gap-1 p-2 bg-gray-50 dark:bg-gray-900 border-b border-gray-200 dark:border-gray-800">
+      <UButton
+        type="button"
+        variant="ghost"
+        color="neutral"
+        size="xs"
+        @click="insertMarkdown('**', '**')"
+        title="Bold"
+      >
+        <span class="font-bold">B</span>
+      </UButton>
+      <UButton
+        type="button"
+        variant="ghost"
+        color="neutral"
+        size="xs"
+        @click="insertMarkdown('*', '*')"
+        title="Italic"
+      >
         <em>I</em>
-      </button>
-      <button type="button" @click="insertMarkdown('# ', '')" title="Heading" class="toolbar-btn">
+      </UButton>
+      <UButton
+        type="button"
+        variant="ghost"
+        color="neutral"
+        size="xs"
+        @click="insertMarkdown('# ', '')"
+        title="Heading"
+      >
         H
-      </button>
-      <button type="button" @click="insertMarkdown('[', '](url)')" title="Link" class="toolbar-btn">
+      </UButton>
+      <UButton
+        type="button"
+        variant="ghost"
+        color="neutral"
+        size="xs"
+        @click="insertMarkdown('[', '](url)')"
+        title="Link"
+      >
         🔗
-      </button>
-      <button type="button" @click="insertMarkdown('- ', '')" title="List" class="toolbar-btn">
+      </UButton>
+      <UButton
+        type="button"
+        variant="ghost"
+        color="neutral"
+        size="xs"
+        @click="insertMarkdown('- ', '')"
+        title="List"
+      >
         •
-      </button>
-      <button type="button" @click="insertMarkdown('```', '\n```')" title="Code" class="toolbar-btn">
+      </UButton>
+      <UButton
+        type="button"
+        variant="ghost"
+        color="neutral"
+        size="xs"
+        @click="insertMarkdown('```', '\n```')"
+        title="Code"
+      >
         &lt;/&gt;
-      </button>
-      <button type="button" @click="triggerImageUpload" title="Upload Image" class="toolbar-btn" :disabled="isUploading">
+      </UButton>
+      <UButton
+        type="button"
+        variant="ghost"
+        color="neutral"
+        size="xs"
+        title="Upload Image"
+        :disabled="isUploading"
+        @click="triggerImageUpload"
+      >
         🖼️
-      </button>
-      <button type="button" @click="togglePreview" class="toolbar-btn">
+      </UButton>
+      <UButton
+        type="button"
+        variant="ghost"
+        color="neutral"
+        size="xs"
+        @click="togglePreview"
+      >
         {{ showPreview ? 'Edit' : 'Preview' }}
-      </button>
+      </UButton>
     </div>
-    
-    <div v-if="isUploading" class="uploading-indicator">
+
+    <div v-if="isUploading" class="px-3 py-2 bg-primary/10 text-primary text-sm text-center border-b border-gray-200 dark:border-gray-800">
       Uploading image...
     </div>
-    
+
     <input
       ref="fileInput"
       type="file"
       accept="image/*"
+      class="hidden"
       @change="handleFileSelect"
-      class="file-input"
     />
-    
-    <div 
+
+    <div
       ref="editorContainer"
-      class="editor-container"
-      :class="{ 'drag-over': isDragOver }"
+      class="min-h-[150px] transition-colors"
+      :class="{ 'bg-primary/5': isDragOver }"
       @dragover.prevent="isDragOver = true"
       @dragleave.prevent="isDragOver = false"
       @drop.prevent="handleDrop"
@@ -51,16 +107,21 @@
       <textarea
         v-if="!showPreview"
         :value="modelValue"
-        @input="$emit('update:modelValue', $event.target.value)"
+        class="w-full min-h-[150px] p-4 border-0 bg-transparent font-mono text-sm resize-y focus:outline-none focus:ring-0"
         :placeholder="placeholder"
-        class="editor-textarea"
+        @input="$emit('update:modelValue', $event.target.value)"
       />
-      <div v-else class="editor-preview" v-html="renderedMarkdown"></div>
+      <div
+        v-else
+        class="p-4 prose prose-sm max-w-none dark:prose-invert min-h-[150px] max-h-[400px] overflow-y-auto"
+        v-html="renderedMarkdown"
+      />
     </div>
   </div>
 </template>
 
 <script setup>
+import { ref, computed, nextTick } from 'vue'
 import markdownit from 'markdown-it'
 
 const props = defineProps({
@@ -88,34 +149,55 @@ const md = markdownit({
   typographer: true
 })
 
-const renderedMarkdown = computed(() => {
-  return md.render(props.modelValue || '')
-})
+const renderedMarkdown = computed(() => md.render(props.modelValue || ''))
+
+function insertMarkdown(prefix, suffix) {
+  const textarea = document.activeElement
+  if (!textarea || textarea.tagName !== 'TEXTAREA') return
+
+  const start = textarea.selectionStart
+  const end = textarea.selectionEnd
+  const text = props.modelValue
+  const selectedText = text.substring(start, end)
+
+  const newText = text.substring(0, start) + prefix + selectedText + suffix + text.substring(end)
+  emit('update:modelValue', newText)
+
+  nextTick(() => {
+    textarea.focus()
+    textarea.setSelectionRange(start + prefix.length, end + prefix.length)
+  })
+}
+
+function togglePreview() {
+  showPreview.value = !showPreview.value
+}
+
+function insertImage(url) {
+  const markdown = `![image](${url})\n\n`
+  emit('update:modelValue', props.modelValue + markdown)
+}
 
 async function uploadImage(file) {
   isUploading.value = true
-  
+
   try {
-    const reader = new FileReader()
-    
-    const base64Promise = new Promise((resolve, reject) => {
+    const arrayBuffer = await new Promise((resolve, reject) => {
+      const reader = new FileReader()
       reader.onload = () => resolve(reader.result)
       reader.onerror = reject
-      reader.readAsDataURL(file)
+      reader.readAsArrayBuffer(file)
     })
-    
-    const base64 = await base64Promise
-    const base64Data = base64.split(',')[1]
-    
+
     const response = await $fetch('/api/upload', {
       method: 'POST',
-      body: base64Data,
+      body: arrayBuffer,
       headers: {
         'Content-Type': file.type,
         'X-File-Name': file.name
       }
     })
-    
+
     return response.url
   } catch (error) {
     console.error('Upload error:', error)
@@ -124,11 +206,6 @@ async function uploadImage(file) {
   } finally {
     isUploading.value = false
   }
-}
-
-function insertImage(url) {
-  const markdown = `![${props.modelValue || 'image'}](${url})\n\n`
-  emit('update:modelValue', props.modelValue + markdown)
 }
 
 function triggerImageUpload() {
@@ -147,9 +224,7 @@ async function handleFileSelect(event) {
 }
 
 async function handleDrop(event) {
-  const files = event.dataTransfer?.files
-  const file = files?.[0]
-  
+  const file = event.dataTransfer?.files?.[0]
   if (file && file.type.startsWith('image/')) {
     const url = await uploadImage(file)
     if (url) {
@@ -161,7 +236,7 @@ async function handleDrop(event) {
 async function handlePaste(event) {
   const items = event.clipboardData?.items
   if (!items) return
-  
+
   for (const item of items) {
     if (item.type.startsWith('image/')) {
       const file = item.getAsFile()
@@ -177,151 +252,3 @@ async function handlePaste(event) {
   }
 }
 </script>
-
-<style scoped>
-.markdown-editor {
-  display: flex;
-  flex-direction: column;
-  border: 2px solid #e0e0e0;
-  border-radius: 8px;
-  overflow: hidden;
-  transition: border-color 0.2s;
-}
-
-.markdown-editor:focus-within {
-  border-color: #667eea;
-}
-
-.toolbar {
-  display: flex;
-  gap: 0.25rem;
-  padding: 0.5rem;
-  background: #f8f9fa;
-  border-bottom: 1px solid #e0e0e0;
-}
-
-.toolbar-btn {
-  padding: 0.375rem 0.625rem;
-  background: white;
-  border: 1px solid #e0e0e0;
-  border-radius: 4px;
-  cursor: pointer;
-  font-size: 0.875rem;
-  color: #555;
-  transition: all 0.2s;
-}
-
-.toolbar-btn:hover {
-  background: #667eea;
-  color: white;
-  border-color: #667eea;
-}
-
-.toolbar-btn:disabled {
-  opacity: 0.5;
-  cursor: not-allowed;
-}
-
-.file-input {
-  display: none;
-}
-
-.editor-container {
-  position: relative;
-  min-height: 150px;
-}
-
-.editor-container.drag-over {
-  background: #f0f0ff;
-}
-
-.uploading-indicator {
-  padding: 0.5rem;
-  background: #e3f2fd;
-  color: #1976d2;
-  text-align: center;
-  font-size: 0.875rem;
-  border-bottom: 1px solid #bbdefb;
-}
-
-.editor-textarea {
-  width: 100%;
-  min-height: 150px;
-  padding: 1rem;
-  border: none;
-  resize: vertical;
-  font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
-  font-size: 0.875rem;
-  line-height: 1.6;
-}
-
-.editor-textarea:focus {
-  outline: none;
-}
-
-.editor-preview {
-  padding: 1rem;
-  min-height: 150px;
-  background: #fafafa;
-  overflow-y: auto;
-  max-height: 400px;
-}
-
-.editor-preview :deep(h1),
-.editor-preview :deep(h2),
-.editor-preview :deep(h3),
-.editor-preview :deep(h4),
-.editor-preview :deep(h5),
-.editor-preview :deep(h6) {
-  margin-top: 1rem;
-  margin-bottom: 0.5rem;
-  color: #333;
-}
-
-.editor-preview :deep(p) {
-  margin-bottom: 0.75rem;
-}
-
-.editor-preview :deep(ul),
-.editor-preview :deep(ol) {
-  margin-bottom: 0.75rem;
-  padding-left: 1.5rem;
-}
-
-.editor-preview :deep(code) {
-  background: #f0f0f0;
-  padding: 0.125rem 0.375rem;
-  border-radius: 3px;
-  font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
-  font-size: 0.85em;
-}
-
-.editor-preview :deep(pre) {
-  background: #f6f8fa;
-  padding: 1rem;
-  border-radius: 6px;
-  overflow-x: auto;
-  margin-bottom: 0.75rem;
-}
-
-.editor-preview :deep(pre code) {
-  background: transparent;
-  padding: 0;
-}
-
-.editor-preview :deep(blockquote) {
-  border-left: 3px solid #667eea;
-  padding-left: 1rem;
-  margin-left: 0;
-  color: #666;
-}
-
-.editor-preview :deep(a) {
-  color: #667eea;
-  text-decoration: none;
-}
-
-.editor-preview :deep(a:hover) {
-  text-decoration: underline;
-}
-</style>

@@ -5,6 +5,7 @@ export default defineEventHandler(() => {
   const tasks = db.prepare(`
     SELECT t.*, 
            p.name as project_name,
+           p.slug as project_slug,
            u.username as user_name
     FROM tasks t
     LEFT JOIN projects p ON t.project_id = p.id

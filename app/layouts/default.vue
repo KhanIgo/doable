@@ -1,26 +1,47 @@
 <template>
-  <div class="app-container">
-    <nav class="navbar">
-      <h1>Doable</h1>
-      <div class="nav-links">
-        <NuxtLink to="/" class="nav-link">Tasks</NuxtLink>
-        <NuxtLink to="/projects" class="nav-link">Projects</NuxtLink>
-        <NuxtLink to="/sprints" class="nav-link">Sprints</NuxtLink>
-        <template v-if="user">
-          <span class="user-info">
-            <img v-if="user.avatar" :src="user.avatar" alt="Avatar" class="avatar" />
-            <span>{{ user.username }}</span>
-          </span>
-          <button @click="logout" class="logout-btn">Logout</button>
-        </template>
-        <template v-else>
-          <NuxtLink to="/auth" class="nav-link">Sign In</NuxtLink>
-          <NuxtLink to="/reg" class="nav-link btn-primary">Register</NuxtLink>
-        </template>
-      </div>
-    </nav>
+  <div class="min-h-screen bg-gray-50 dark:bg-gray-900">
+    <header class="border-b border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-950">
+      <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div class="flex justify-between items-center h-16">
+          <NuxtLink to="/" class="text-xl font-bold text-gray-900 dark:text-white">
+            Doable
+          </NuxtLink>
 
-    <main class="content">
+          <nav class="flex items-center gap-4">
+            <UButton to="/" variant="ghost" color="neutral">Tasks</UButton>
+            <UButton to="/projects" variant="ghost" color="neutral">Projects</UButton>
+            <UButton to="/sprints" variant="ghost" color="neutral">Sprints</UButton>
+
+            <template v-if="user">
+              <div class="flex items-center gap-2">
+                <UAvatar
+                  v-if="user.avatar"
+                  :src="user.avatar"
+                  :alt="user.username"
+                  size="sm"
+                />
+                <UBadge v-else color="primary" variant="soft" size="sm">
+                  {{ user.username?.charAt(0)?.toUpperCase() || 'U' }}
+                </UBadge>
+                <span class="text-sm font-medium text-gray-700 dark:text-gray-300">
+                  {{ user.username }}
+                </span>
+              </div>
+              <UButton to="/my" variant="ghost" color="neutral" size="sm">Profile</UButton>
+              <UButton @click="logout" color="error" variant="solid" size="sm">
+                Logout
+              </UButton>
+            </template>
+            <template v-else>
+              <UButton to="/auth" variant="ghost" color="neutral">Sign In</UButton>
+              <UButton to="/reg" color="primary" variant="solid">Register</UButton>
+            </template>
+          </nav>
+        </div>
+      </div>
+    </header>
+
+    <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
       <slot />
     </main>
   </div>
@@ -46,101 +67,3 @@ onMounted(() => {
   }
 })
 </script>
-
-<style>
-* {
-  box-sizing: border-box;
-  margin: 0;
-  padding: 0;
-}
-
-body {
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, sans-serif;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-  min-height: 100vh;
-}
-
-.app-container {
-  max-width: 1200px;
-  margin: 0 auto;
-  background: white;
-  min-height: 100vh;
-  box-shadow: 0 0 40px rgba(0, 0, 0, 0.1);
-}
-
-.navbar {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 1rem 2rem;
-  background: #f8f9fa;
-  border-bottom: 1px solid #e0e0e0;
-}
-
-.navbar h1 {
-  color: #333;
-  font-size: 1.5rem;
-}
-
-.nav-links {
-  display: flex;
-  align-items: center;
-  gap: 1.5rem;
-}
-
-.nav-link {
-  color: #555;
-  text-decoration: none;
-  font-weight: 500;
-  transition: color 0.2s;
-}
-
-.nav-link:hover {
-  color: #667eea;
-}
-
-.nav-link.btn-primary {
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-  color: white;
-  padding: 0.5rem 1rem;
-  border-radius: 6px;
-}
-
-.nav-link.btn-primary:hover {
-  opacity: 0.9;
-}
-
-.user-info {
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-  color: #555;
-  font-weight: 500;
-}
-
-.avatar {
-  width: 32px;
-  height: 32px;
-  border-radius: 50%;
-  object-fit: cover;
-}
-
-.logout-btn {
-  padding: 0.5rem 1rem;
-  background: #ff4757;
-  color: white;
-  border: none;
-  border-radius: 6px;
-  font-size: 0.875rem;
-  cursor: pointer;
-  transition: background 0.2s;
-}
-
-.logout-btn:hover {
-  background: #ff3344;
-}
-
-.content {
-  padding: 2rem;
-}
-</style>
